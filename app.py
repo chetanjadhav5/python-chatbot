@@ -1,4 +1,5 @@
 import pickle
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template
 import mysql.connector
 
@@ -7,8 +8,8 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 
 # Load trained model and vectorizer with error handling
 try:
-    with open("C:/Users/dell/OneDrive/Desktop/Project/chatbot frontend/chatbot_model.pkl", 'rb') as model_file, \
-         open("C:/Users/dell/OneDrive/Desktop/Project/chatbot frontend/tfidf_vectorizer.pkl", 'rb') as vec_file:
+    with open("./chatbot_model.pkl", 'rb') as model_file, \
+         open("./tfidf_vectorizer.pkl", 'rb') as vec_file:
         model = pickle.load(model_file)
         vectorizer = pickle.load(vec_file)
     print("Model and vectorizer loaded successfully.")
@@ -20,10 +21,12 @@ except Exception as e:
 def get_db_connection():
     try:
         db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Prashant@123",
-            database="enquiries_db"
+            host=os.getenv('DB_HOST'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASS'),
+            database=os.getenv('DB_NAME'),
+            ssl_ca='./DigiCertGlobalRootCA.crt.pem',
+            ssl_disabled=False
         )
         return db
     except mysql.connector.Error as err:
