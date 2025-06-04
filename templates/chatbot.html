@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDCP Chatbot</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+<div class="chat-container">
+    <!-- Chat Header -->
+    <div class="chat-header">IDCP Bot</div>
+    <span id="status-dot" class="status-dot"></span>
+    
+    <!-- Chat Box -->
+    <div class="chat-box">
+        <div class="bot-message">👋 Welcome To IDCP Platform, I am your IDCP Assistant. How can I assist you today?</div>
+
+        <!-- Enquiry Form (Appears after 2 seconds) -->
+        <div class="enquiry-form hidden">
+            <h3>📋 Quick Enquiry</h3>
+            <form id="enquiry-form">
+                <input type="text" id="enquiry-name" placeholder="Your Name" required>
+                <input type="email" id="enquiry-email" placeholder="Your Email" required>
+                <input type="text" id="enquiry-department" placeholder="Department" required>
+                <textarea id="enquiry-message" placeholder="Your Message" required></textarea>
+                <button type="button" class="submit-btn" onclick="submitEnquiry()">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat Input with Voice Input -->
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <button id="voice-btn">🎤</button> <!-- Voice Input Button -->
+    </div>
+</div>
+
+<script>
+    // Show Enquiry Form after 2 seconds
+    setTimeout(() => {
+        document.querySelector('.enquiry-form').classList.remove('hidden');
+    }, 2000);
+
+    // Function to submit enquiry
+    async function submitEnquiry() {
+        let name = document.getElementById("enquiry-name").value;
+        let department = document.getElementById("enquiry-department").value;
+        let message = document.getElementById("enquiry-message").value;
+        let email = document.getElementById("enquiry-email").value;
+
+        if (!name || !email || !department || !message) {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        try {
+            let response = await fetch("http://localhost:5000/submit-enquiry", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, department, message })
+            });
+
+            let result = await response.json();
+            if (result.success) {
+                alert("Enquiry submitted successfully!");
+                document.getElementById("enquiry-form").reset();
+            } else {
+                alert("Failed to submit enquiry.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error submitting enquiry.");
+        }
+    }
+
+    // Chatbot Functionality
+    function sendMessage() {
+        let inputField = document.getElementById('userInput');
+        let message = inputField.value.trim();
+
+        if (message !== "") {
+            let chatBox = document.querySelector('.chat-box');
+
+            // Append user message
+            let userMessage = document.createElement('div');
+            userMessage.className = 'user-message';
+            userMessage.textContent = message;
+            chatBox.appendChild(userMessage);
+
+            // Clear input field
+            inputField.value = "";
+
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Simulate bot response after a short delay
+            setTimeout(() => {
+                let botMessage = document.createElement('div');
+                botMessage.className = 'bot-message';
+                botMessage.textContent = "Processing your request... 🤖";
+                chatBox.appendChild(botMessage);
+
+                // Auto-scroll to bottom after response
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000); // 1-second delay for natural interaction
+        }
+    }
+
+    // Event listener for Enter key press
+    document.addEventListener("DOMContentLoaded", function () {
+        let inputField = document.getElementById('userInput');
+
+        inputField.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent form submission if inside a form
+                sendMessage();
+            }
+        });
+    });
+
+    // ** Improved Voice Recognition Feature **
+    document.getElementById("voice-btn").addEventListener("click", function () {
+        let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = "en-US"; // Set language
+        recognition.interimResults = false; // Get final results only
+        recognition.continuous = false; // Stop listening when user stops speaking
+
+        recognition.start();
+
+        recognition.onstart = function () {
+            console.log("Voice recognition activated...");
+            document.getElementById("voice-btn").textContent = "🎙️ Listening...";
+        };
+
+        recognition.onspeechend = function () {
+            recognition.stop();
+            document.getElementById("voice-btn").textContent = "🎤"; // Reset button text
+            console.log("Voice recognition stopped.");
+        };
+
+        recognition.onresult = function (event) {
+            let transcript = event.results[0][0].transcript;
+            document.getElementById("userInput").value = transcript;
+            sendMessage(); // Auto-send message after voice input
+        };
+
+        recognition.onerror = function (event) {
+            console.error("Speech recognition error:", event.error);
+            document.getElementById("voice-btn").textContent = "🎤"; // Reset button text
+            alert("Voice recognition failed. Please try again.");
+        };
+    });
+</script>
+<script src="../static/chatbot.js"></script>
+</body>
+</html> 
