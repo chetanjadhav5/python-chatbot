@@ -22,7 +22,7 @@ async function sendMessage() {
         let botMessage = appendMessage("bot", "Processing your request... 🤖");
 
         try {
-            let response = await fetch("http://localhost:5000/chat", {
+            let response = await fetch("https://python-chatbot-ou3p.onrender.com/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ question: message })
